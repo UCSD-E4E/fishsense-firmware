@@ -27,6 +27,7 @@ using namespace std;
 //Peter Tueller ptueller@eng.ucsd.edu
 //Updated August 2022 at Summer REU
 //LED Indicator light logic updated
+//Depth sensor integrated into code
 
 std::string exec(const char* cmd) {
     char buffer[128];
@@ -100,6 +101,7 @@ int main(int argc, char* argv[]) try
 	
    system("echo 0 > /sys/class/gpio/gpio388/value"); //Leave indicator light on after booting
 
+	int pid = -1;
     while(true) {
         if(exec("cat /sys/class/gpio/gpio298/value") == "0\n") { //If switch is turned on
             cout << "saw reed switch\n";
@@ -115,6 +117,16 @@ int main(int argc, char* argv[]) try
                 }
                
                 rec_flag=true;
+		    
+		           //call python for depth sensor integration
+                pid = fork();
+                if (pid == 0) {
+                    cout << "spawing python" << endl;
+                    system("/usr/bin/depth.py");
+                    // I'm the child
+                    return 0;
+                }
+		    
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 pipe.start(cfg); //bag file should be saving at this point!
 		        cout << "saved bag to " << bag_location.str() << endl;
@@ -146,6 +158,8 @@ int main(int argc, char* argv[]) try
 			
                
                     pipe.stop(); //This should save the bag file
+		       kill(pid, SIGTERM); //end python call
+                    pid = -1;
                
                     system("sync");
                     system("sync");
