@@ -89,18 +89,28 @@ int main(int argc, char* argv[]) try
     //Blink the REC LED to prove that the system has booted and is running the program
     for(int i=0; i<5; i++) {
         system("echo 0 > /sys/class/gpio/gpio298/value");
-        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        std::this_thread::sleep_for(std::chrono::milliseconds(150));
         system("echo 1 > /sys/class/gpio/gpio298/value");
-        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        std::this_thread::sleep_for(std::chrono::milliseconds(150));
         cout << "blink\n";
     }
+	
+   system("echo 0 > /sys/class/gpio/gpio388/value"); //Leave indicator light on after booting
 
     while(true) {
         if(exec("cat /sys/class/gpio/gpio388/value") == "0\n") { //If we see a magnetic signal
             cout << "saw reed switch\n";
             rs2::pipeline pipe;
             if(!rec_flag) { //And are not already recording
-                system("echo 0 > /sys/class/gpio/gpio298/value"); //Turn on REC LED
+		    //Blink the REC LED to acknowledge switch has been turned on
+                for(int i=0; i<3; i++) {
+                    system("echo 0 > /sys/class/gpio/gpio388/value");
+                    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+                    system("echo 1 > /sys/class/gpio/gpio388/value");
+                    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+                    cout << "blink\n";
+                }
+               
                 rec_flag=true;
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 pipe.start(cfg); //bag file should be saving at this point!
@@ -110,19 +120,38 @@ int main(int argc, char* argv[]) try
             while(rec_flag) {
                 //We are having fun and saving the bag, all is well in the world
                 //Fun is continuing to be had
+		    
+		//while recording we want a slow blink from the rec LED
+                system("echo 0 > /sys/class/gpio/gpio388/value");
+                std::this_thread::sleep_for(std::chrono::milliseconds(750));
+                system("echo 1 > /sys/class/gpio/gpio388/value");
+                std::this_thread::sleep_for(std::chrono::milliseconds(750));
+              
                 if(exec("cat /sys/class/gpio/gpio388/value") == "0\n") { //If we see a magnetic signal again
+			
+			      //Blink the REC LED to acknowledge the switch has been turned off
+                    for(int i=0; i<3; i++) {
+                        system("echo 0 > /sys/class/gpio/gpio388/value");
+                        std::this_thread::sleep_for(std::chrono::milliseconds(150));
+                        system("echo 1 > /sys/class/gpio/gpio388/value");
+                        std::this_thread::sleep_for(std::chrono::milliseconds(150));
+                        cout << "blink\n";
+                    }
+			
                     rec_flag = false;
-                    system("echo 1 > /sys/class/gpio/gpio298/value"); //Turn off REC LED
+		    system("echo 0 > /sys/class/gpio/gpio388/value"); //Rec LED returns to solid ON
+			
+               
                     pipe.stop(); //This should save the bag file
-                    system("echo 0 > /sys/class/gpio/gpio298/value"); //Turn off REC LED
+               
                     system("sync");
                     system("sync");
                     system("sync");
-                    system("echo 1 > /sys/class/gpio/gpio298/value"); //Turn off REC LED
+                    
                     system("umount /mnt/data");
-                    system("echo 0 > /sys/class/gpio/gpio298/value"); //Turn off REC LED
+                   
                     system("mount /mnt/data");
-                    system("echo 1 > /sys/class/gpio/gpio298/value"); //Turn off REC LED
+                   
                     //Prep the potential next bag file
                     bag_index++;
                     std::stringstream bag_location_new;
