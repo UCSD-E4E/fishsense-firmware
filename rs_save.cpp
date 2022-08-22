@@ -20,10 +20,13 @@ using namespace std;
 #include <string.h>
 #include <chrono>
 #include <stdexcept>
+#include <signal.h>
 
 //Saving firmware for FishSense prototype 2.0 (TX2)
 //February 12th, 2022
 //Peter Tueller ptueller@eng.ucsd.edu
+//Updated August 2022 at Summer REU
+//LED Indicator light logic updated
 
 std::string exec(const char* cmd) {
     char buffer[128];
