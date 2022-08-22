@@ -77,23 +77,23 @@ int main(int argc, char* argv[]) try
     bag_location << dirprefix.str().c_str() << bag_index << ".bag";
     cfg.enable_record_to_file(bag_location.str().c_str());
 
-    //Set up GPIOs
-    system("echo 388 > /sys/class/gpio/export");
+     //Set up GPIOs
+    system("echo 298 > /sys/class/gpio/export");  //298 is the recording switch
+    cout << "298 export\n"; 
+    system("echo 388 > /sys/class/gpio/export");  //388 is the rec indicator light
     cout << "388 export\n";
-    system("echo 298 > /sys/class/gpio/export");
-    cout << "298 export\n";
-    system("echo in > /sys/class/gpio/gpio388/direction");
-    cout << "388 in\n";
-    system("echo out > /sys/class/gpio/gpio298/direction");
-    cout << "298 out\n";
-    system("echo 1 > /sys/class/gpio/gpio298/active_low");
-    cout << "298 active low\n";
+    system("echo in > /sys/class/gpio/gpio298/direction"); 
+    cout << "298 in\n"; 
+    system("echo out > /sys/class/gpio/gpio388/direction");
+    cout << "388 out\n";
+    system("echo 1 > /sys/class/gpio/gpio388/active_low");
+    cout << "388 active low\n";
 
     //Blink the REC LED to prove that the system has booted and is running the program
     for(int i=0; i<5; i++) {
-        system("echo 0 > /sys/class/gpio/gpio298/value");
+        system("echo 0 > /sys/class/gpio/gpio388/value");
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
-        system("echo 1 > /sys/class/gpio/gpio298/value");
+        system("echo 1 > /sys/class/gpio/gpio388/value");
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
         cout << "blink\n";
     }
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) try
    system("echo 0 > /sys/class/gpio/gpio388/value"); //Leave indicator light on after booting
 
     while(true) {
-        if(exec("cat /sys/class/gpio/gpio388/value") == "0\n") { //If we see a magnetic signal
+        if(exec("cat /sys/class/gpio/gpio298/value") == "0\n") { //If switch is turned on
             cout << "saw reed switch\n";
             rs2::pipeline pipe;
             if(!rec_flag) { //And are not already recording
@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) try
                 system("echo 1 > /sys/class/gpio/gpio388/value");
                 std::this_thread::sleep_for(std::chrono::milliseconds(750));
               
-                if(exec("cat /sys/class/gpio/gpio388/value") == "0\n") { //If we see a magnetic signal again
+               if(exec("cat /sys/class/gpio/gpio298/value") == "1\n") { //If the rec switch is turned off
 			
 			      //Blink the REC LED to acknowledge the switch has been turned off
                     for(int i=0; i<3; i++) {
