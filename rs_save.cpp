@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) try
     system("echo 0 > /sys/class/gpio/gpio388/value"); //Leave indicator light on after booting
 
 
-    int pid = -1;
+    // int pid = -1;
     while(true) {
         if(exec("cat /sys/class/gpio/gpio298/value") == "0\n") { //If switch is turned on
             cout << "saw reed switch\n";
@@ -122,13 +122,13 @@ int main(int argc, char* argv[]) try
                 rec_flag=true;
 
                 //call python for depth sensor integration
-                pid = fork();
-                if (pid == 0) {
-                    cout << "spawing python" << endl;
-                    system("/usr/bin/depth.py");
-                    // I'm the child
-                    return 0;
-                }
+                // pid = fork();
+                // if (pid == 0) {
+                //     cout << "spawing python" << endl;
+                //     system("/usr/bin/depth.py");
+                //     // I'm the child
+                //     return 0;
+                // }
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 pipe.start(cfg); //bag file should be saving at this point!
@@ -161,8 +161,8 @@ int main(int argc, char* argv[]) try
                     system("echo 0 > /sys/class/gpio/gpio388/value"); //Rec LED returns to solid ON
 
                     pipe.stop(); //This should save the bag file
-                    kill(pid, SIGTERM); //end python call
-                    pid = -1;
+                    // kill(pid, SIGTERM); //end python call
+                    // pid = -1;
 
                     system("sync");
                     system("sync");
